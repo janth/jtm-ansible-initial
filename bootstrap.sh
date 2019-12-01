@@ -19,13 +19,15 @@ if [[ -n ${SUDO_USER} ]] ; then
    exit 1
 fi
 
-
+log () {
+   echo "$@"
+}
 
 declare -a pkgs=( python3-pip aptitude git wget )
 for p in ${pkgs[*]} ; do
    /usr/bin/dpkg -l ${p} >/dev/null 2>&1 || { 
       log "Installing ${p}"
-      /usr/bin/sudo /usr/bin/apt -y install ${p}
+      /usr/bin/sudo /usr/bin/apt -y --quiet install ${p}
 }
 done
 
