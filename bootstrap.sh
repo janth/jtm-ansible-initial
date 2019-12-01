@@ -17,7 +17,6 @@ set -o braceexpand
 set -o allexport
 set -o noclobber
 set -o errexit
-#set -o nounset
 
 if [[ -n ${SUDO_USER} ]] ; then
    echo "ERROR: This script must not be run using sudo."
@@ -43,7 +42,7 @@ log "Installing ansible (if not already installed)"
 /usr/bin/pip3 list | /usr/bin/grep '^ansible\s' > /dev/null || /usr/bin/sudo /usr/bin/pip3 install ansible --progress-bar off
 /usr/local/bin/ansible --version
 
-set -o errexit
+# set -o errexit
 set -o nounset
 
 MYSUDO=/etc/sudoers.d/00-sudoers-defaults
@@ -91,7 +90,7 @@ ssh_id=${HOME}/.ssh/id_ed25519
 umask 0022
 [[ ! -d ${ssh_id%/*} ]] && mkdir ${ssh_id%/*}
 if [[ ! -r ${ssh_id} ]] ; then
-   echo "Generating ssh id for you (${ssh_id} does not exists)"
+   log "Generating ssh id for you (${ssh_id} does not exists)"
    /usr/bin/ssh-keygen -a 100 -t ed25519 -f ${ssh_id}
 fi
 if [[ ! -r ${ssh_id%/*}/authorized_keys ]] ; then
@@ -100,7 +99,7 @@ else
    /usr/bin/cat ${ssh_id}.pub >> ${ssh_id%/*}/authorized_keys
 fi
 
-reprodir=${gitrepo##*/}
+repodir=${gitrepo##*/}
 repodir=${repodir%.*}
 git clone ${gitrepo} ${repordir}
 cat << X
