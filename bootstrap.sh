@@ -12,6 +12,12 @@ absolute_script_path_name=$( /bin/readlink --canonicalize ${script_path}/${scrip
 absolute_script_path=${absolute_script_path_name%/*}                 # Dirname, or only /path/to, now absolute
 script_basedir=${script_path%/*}                   # basedir, if script_path is .../bin/
 
+set -o pipefail
+set -o braceexpand
+set -o allexport
+set -o noclobber
+set -o errexit
+set -o nounset
 
 if [[ -n ${SUDO_USER} ]] ; then
    echo "ERROR: This script must not be run using sudo."
