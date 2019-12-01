@@ -101,7 +101,7 @@ fi
 
 repodir=${gitrepo##*/}
 repodir=${repodir%.*}
-git clone ${gitrepo} ${repordir}
+git clone ${gitrepo} ${repodir}
 cat << X
 Now do:
 cd ${repodir}
