@@ -17,7 +17,7 @@ set -o braceexpand
 set -o allexport
 set -o noclobber
 set -o errexit
-set -o nounset
+#set -o nounset
 
 if [[ -n ${SUDO_USER} ]] ; then
    echo "ERROR: This script must not be run using sudo."
