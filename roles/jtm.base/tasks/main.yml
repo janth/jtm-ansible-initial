@@ -1,0 +1,231 @@
+---
+# vim:sw=2
+- name: Debug messages
+  debug:
+    msg:
+      # - "System {{ inventory_hostname }} has uuid {{ ansible_product_uuid }}"
+      - "{{ beskjed }}"
+      - "{{ melding.apt }}"
+  when:
+    - ( ansible_facts['distribution'] == "Ubuntu" and Debug == True )
+  tags:
+    - msg
+
+- name: base | Install locales
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ locales }}"
+  tags:
+    - locales
+  ignore_errors: yes
+
+# - name: Debug messages
+#   debug:
+#     msg: "aptinst {{ item }}"
+#   when:
+#     - ansible_facts['distribution'] == "Ubuntu"
+#   with_items:
+#     - "{{ packages.apt }}"
+#   tags:
+#     - msg
+
+# Install packages
+- name: Base | Install apt packages
+  apt:
+    name: "{{ packages.apt }}"
+  when: ( ansible_facts['distribution'] == "Ubuntu" and skip_basepkgs is undefined )
+  # loop: "{{ packages.apt }}"
+  tags:
+    - pkg
+  # ignore_errors: yes
+
+- name: Base | Install snap packages
+  snap:
+    name: "{{ packages.snap }}"
+  when:
+    - ansible_facts['distribution'] == "Ubuntu"
+  loop: "{{ packages.snap }}"
+  tags:
+    - pkg
+  ignore_errors: yes
+
+- name: Base | Install snap classic packages
+  snap:
+    name: "{{ item }}"
+    classic: yes
+  when:
+    - ansible_facts['distribution'] == "Ubuntu"
+  loop: "{{ packages.snap_classic }}"
+  tags:
+    - pkg
+  ignore_errors: yes
+
+- name: Base | set vim as default editor
+  alternatives:
+    name: editor
+    path: /usr/bin/vim.nox
+  when: ansible_facts['distribution'] == "Ubuntu"
+  tags:
+    - editor
+
+# - name: Base | set vim as default editor
+#   command: update-alternatives --set editor /usr/bin/vim.nox
+#   creates: /usr/bin/vim.nox
+#   tags:
+#     - vim
+
+- name: Base | configure timezone
+  timezone:
+    name: "{{ timezone }}"
+  tags:
+    - tz
+
+# https://github.com/geerlingguy/ansible-role-packer
+- name: Download and unarchive Packer.
+  unarchive:
+    src: https://releases.hashicorp.com/packer/{{ packer_version }}/packer_{{ packer_version }}_linux_{{ packer_arch }}.zip
+    dest: "{{ packer_bin_path }}"
+    remote_src: true
+    creates: "{{ packer_bin_path }}/packer"
+
+- name: Download and unarchive Vagrant.
+  unarchive:
+    src: https://releases.hashicorp.com/vagrant/{{ vagrant_version }}/vagrant_{{ vagrant_version }}_linux_{{ vagrant_arch }}.zip
+    dest: "{{ vagrant_bin_path }}"
+    remote_src: true
+    creates: "{{ vagrant_bin_path }}/vagrant"
+- name: Ensure dependencies are installed.
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+    state: present
+
+# https://github.com/geerlingguy/ansible-role-puppet
+- name: Add Puppet Labs apt key.
+  apt_key:
+    url: https://apt.puppetlabs.com/DEB-GPG-KEY-puppetlabs
+    state: present
+
+# https://apt.puppetlabs.com/index_by_lastModified.html
+- name: Add Puppet Labs repository.
+  apt:
+    deb: "{{ puppet_apt_deb }}"
+    state: present
+  register: puppet_apt_deb_install
+
+- name: Update apt cache if necessary.
+  apt: update_cache=true
+  when: puppet_apt_deb_install.changed
+  tags: ['skip_ansible_lint']
+
+# https://puppet.com/docs/bolt/latest/bolt.html
+# https://puppet.com/docs/bolt/latest/bolt_installing.html#concept-8499
+# https://puppet.com/download-puppet-development-kit
+# https://puppet.com/docs/pdk/1.x/pdk_install.html
+- name: Install Puppet apps
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ puppet_package }}"
+    - "puppet-bolt"
+    - "pdk"
+
+- name: Add Puppet bin directory to $PATH.
+  lineinfile: >
+    dest=/etc/environment
+    state=present
+    backrefs=yes
+    regexp='PATH=(["]*)((?!.*?{{ puppet_bin_path }}).*?)(["]*)$'
+    line="PATH=\1\2:{{ puppet_bin_path }}\3"
+
+- name: Add puppet symlinks to /usr/local/bin
+  file:
+    src: "/opt/puppetlabs/puppet/bin/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+  with_items:
+    - puppet
+    - facter
+    - gem
+    - hiera
+    - ruby
+  tags:
+    - puppet
+
+- name: Install r10k latest using puppet gem
+  gem:
+    name: r10k
+    user_install: false
+  tags:
+    - puppet
+
+- name: Add puppet symlinks to /usr/local/bin
+  file:
+    src: "/opt/puppetlabs/puppet/bin/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+  with_items:
+    - r10k
+  tags:
+    - puppet
+
+- name: Add Oracle VirtualBox key
+  apt_key:
+    url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    state: present
+  tags:
+    - vbox
+
+# https://itsfoss.com/install-virtualbox-ubuntu/
+- name: Add Oracle VirtualBox repo
+  apt_repository:
+    repo: "deb [arch={{ vbox_arch }}] {{ vbox_apt_url }} {{ ansible_distribution_release }} non-free contrib"
+    state: present
+    filename: vbox
+  register: vbox_apt_deb_install
+
+- name: Update apt cache if necessary.
+  apt: update_cache=true
+  when: vbox_apt_deb_install.changed
+  tags: ['skip_ansible_lint']
+
+- name: Install VirtualBox
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ vbox_pkg }}"
+
+# - name: Base | configure timezone
+#   copy: content={{ timezone }} dest=/etc/timezone owner=root group=root mode=644 backup=yes
+#   notify: b_hdl update timezone
+#   tags:
+#     - tz
+#
+# - name: Base | configure localtime
+#   file: src=/usr/share/zoneinfo/{{ timezone }} dest=/etc/localtime owner=root group=root mode=644 state=link force=yes backup=yes
+#   tags:
+#     - tz
+
+# - name: display post install message
+#   debug: msg={{ post_install.split('\n') }}
+
+
+# ntp:
+# https://help.ubuntu.com/lts/serverguide/NTP.html
+# systemctl status systemd-timesyncd
+# /etc/systemd/timesyncd.conf
+
+# sudo add-apt-repository ppa:pi-rho/dev
+# sudo apt-get update
+# sudo apt-get install tmux-next
+#
+# wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+# sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
+# sudo apt update && sudo apt install virtualbox-6.0
+
+

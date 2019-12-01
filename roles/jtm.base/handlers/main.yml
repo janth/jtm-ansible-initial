@@ -1,0 +1,4 @@
+---
+
+- name: b_hdl update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata

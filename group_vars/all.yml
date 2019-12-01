@@ -1,0 +1,102 @@
+---
+# Ansible conditionals
+Debug: false
+
+beskjed: "Heisan hoppsan"
+melding:
+  el: 'rhel'
+  apt:
+    - 'Dette'
+    - 'er'
+    - 'Ubuntu'
+
+locales:
+  - C
+  - C.UTF-8
+  - POSIX
+  - en_US.utf8
+  - en_GB.utf8
+  - nb_NO.utf8
+
+
+
+packages:
+  apt:
+    - agrep
+    - bash-completion
+    - cowsay
+    - cowsay-off
+    - curl
+    - exuberant-ctags
+    - filters
+    - fortune
+    - fortunes
+    - git
+    - gpart
+    - gparted
+    - htop
+    - i3
+    - i3lock
+    - i3status
+    - lftp
+    - lsof
+    - mosh
+    - ncftp
+    - openssh-server
+    - openssh-sftp-server
+    - openssl
+    - rsync
+    - screen
+    - sshpass
+    - tmux
+    - tree
+    - vim-nox
+    - virt-what
+    - wget
+    - xfsprogs
+    - zsh
+    - criu
+    - reptyr
+    - python-apt
+    - unzip
+    - g10k
+    - dkms
+    - p7zip-full
+    - p7zip-rar
+    - unar
+    - criu
+    - reptyr
+    - atop
+    - htop
+    - ack
+    - ag
+    - ripgrep
+  snap:
+    - chromium
+  snap_classic:
+    - code
+
+timezone: Europe/London
+
+packer_version: '1.4.2'
+packer_arch: 'amd64'
+packer_bin_path: /usr/local/bin
+vagrant_version: '2.2.5'
+vagrant_arch: 'amd64'
+vagrant_bin_path: /usr/local/bin
+
+puppet_apt_deb: "https://apt.puppetlabs.com/puppet6-release-bionic.deb"
+puppet_bin_path: /opt/puppetlabs/bin
+#puppet_package: puppetserver
+puppet_package: puppet-agent
+
+vbox_apt_url: "http://download.virtualbox.org/virtualbox/debian"
+vbox_arch: 'amd64'
+vbox_pkg: 'virtualbox-6.0'
+
+post_install: |
+  Things left to do:
+    - enable dash to dock gnome plugin in gnome tweal tool
+    - install SpaceVim plugins: vim "+call dein#install()" +qa
+    - git clone the dotfiles repo
+

@@ -1,0 +1,10 @@
+---
+- name: Jtm ubuntu personalization
+  connection: local
+  hosts: local
+  #gather_facts: false
+
+  roles:
+   # Install packages
+   - role: jtm.base
+     tags: base
