@@ -27,7 +27,7 @@ declare -a pkgs=( python3-pip aptitude git wget )
 for p in ${pkgs[*]} ; do
    /usr/bin/dpkg -l ${p} >/dev/null 2>&1 || { 
       log "Installing ${p}"
-      /usr/bin/sudo /usr/bin/apt -y --quiet install ${p} >/dev/null
+      /usr/bin/sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -qq ${p} >/dev/null
 }
 done
 
